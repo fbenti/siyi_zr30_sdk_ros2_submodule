@@ -94,8 +94,9 @@ class SIYISDK:
             target=self.gimbalAttLoop, args=(self._gimbal_att_loop_rate,)
         )
 
+        self._gimbal_att_loop_rate = 0.01
         self._g_zoom_thread = threading.Thread(
-            target=self.gimbalZoomLoop, args=(self._gimbal_att_loop_rate * 5,)
+            target=self.gimbalZoomLoop, args=(self._gimbal_att_loop_rate,)
         )
 
     def resetVars(self):
@@ -310,7 +311,7 @@ class SIYISDK:
                 continue
 
             data, data_len, cmd_id, seq = val[0], val[1], val[2], val[3]
-
+            
             if cmd_id == COMMAND.ABSOLUTE_ZOOM_AUTO_FOCUS:
                 self.parseAbsoluteZoomMsg(data, seq)
             elif cmd_id == COMMAND.AUTO_FOCUS:
@@ -330,7 +331,7 @@ class SIYISDK:
             elif cmd_id == COMMAND.REQUEST_GIMBAL_ATTITUDE:
                 self.parseRequestGimbalAttitudeMsg(data, seq)
             elif cmd_id == COMMAND.REQUEST_GIMBAL_CAMERA_FIRMWARE:
-                self.parseRequestFirmwareMsg(data, seq)
+                self.parseRequestFirmwareMsg(data, seq)            
             elif cmd_id == COMMAND.REQUEST_GIMBAL_CAMERA_HARDWARE_ID:
                 self.parseRequestHardwareIDMsg(data, seq)
             elif cmd_id == COMMAND.REQUEST_GIMBAL_CAMERA_PRESENT_WORKING_MODE:
@@ -368,7 +369,7 @@ class SIYISDK:
         if not self.sendMsg(msg):
             return False
         return True
-
+    
     def requestAutoFocus(self):
         """
         Sends request for auto focus
@@ -381,7 +382,7 @@ class SIYISDK:
         if not self.sendMsg(msg):
             return False
         return True
-
+    
     def requestGimbalAttitude(self):
         """
         Sends request for gimbal attitude
@@ -394,7 +395,7 @@ class SIYISDK:
         if not self.sendMsg(msg):
             return False
         return True
-
+    
     def requestGimbalCameraFirmwareVersion(self):
         """
         Sends request for firmware version
@@ -420,7 +421,7 @@ class SIYISDK:
         if not self.sendMsg(msg):
             return False
         return True
-
+    
     def requestGimbalCameraPresentWorkingMode(self):
         """
         Sends request for present working mode
@@ -433,7 +434,7 @@ class SIYISDK:
         if not self.sendMsg(msg):
             return False
         return True
-
+    
     def requestCenterGimbal(self):
         """
         Sends request for gimbal centering
@@ -446,7 +447,7 @@ class SIYISDK:
         if not self.sendMsg(msg):
             return False
         return True
-
+        
     def requestCloseFocus(self):
         """
         Sends request for manual focus, close shot
@@ -459,7 +460,7 @@ class SIYISDK:
         if not self.sendMsg(msg):
             return False
         return True
-
+    
     def requestCurrentZoomValue(self):
         """
         Sends reques for Max Zoom Value
@@ -486,7 +487,7 @@ class SIYISDK:
         if not self.sendMsg(msg):
             return False
         return True
-
+    
     def requestGimbalSpeed(self, yaw_speed: int, pitch_speed: int):
         """
         Sends request for gimbal speed
@@ -504,7 +505,7 @@ class SIYISDK:
         if not self.sendMsg(msg):
             return False
         return True
-
+    
     def requestFocusHold(self):
         """
         Sends request for manual focus, stop
@@ -517,7 +518,7 @@ class SIYISDK:
         if not self.sendMsg(msg):
             return False
         return True
-
+    
     def requestFollowMode(self):
         """
         Sends request for setting Follow mode
@@ -530,7 +531,7 @@ class SIYISDK:
         if not self.sendMsg(msg):
             return False
         return True
-
+    
     def requestFPVMode(self):
         """
         Sends request for setting FPV mode
@@ -556,7 +557,7 @@ class SIYISDK:
         if not self.sendMsg(msg):
             return False
         return True
-
+    
     def requestLockMode(self):
         """
         Sends request for setting Lock mode
@@ -569,7 +570,7 @@ class SIYISDK:
         if not self.sendMsg(msg):
             return False
         return True
-
+    
     def requestLongFocus(self):
         """
         Sends request for manual focus, long shot
@@ -582,7 +583,7 @@ class SIYISDK:
         if not self.sendMsg(msg):
             return False
         return True
-
+    
     def requestMaxZoomValue(self):
         """
         Sends reques for Max Zoom Value
@@ -596,7 +597,7 @@ class SIYISDK:
         if not self.sendMsg(msg):
             return False
         return True
-
+    
     def requestStartStopRecording(self):
         """
         Sends request for toggling video recording
@@ -609,7 +610,7 @@ class SIYISDK:
         if not self.sendMsg(msg):
             return False
         return True
-
+    
     def requestTakePhoto(self):
         """
         Sends request for taking photo
@@ -622,7 +623,7 @@ class SIYISDK:
         if not self.sendMsg(msg):
             return False
         return True
-
+    
     def requestZoomHold(self):
         """
         Sends request for stopping zoom
@@ -661,7 +662,7 @@ class SIYISDK:
         if not self.sendMsg(msg):
             return False
         return True
-
+    
     def sendControlAngleToGimbal(self, yaw_angle: int, pitch_angle: int):
         """
         Sends request for gimbal attitude
@@ -670,9 +671,7 @@ class SIYISDK:
         --
         [tuple] Current yaw, pitch and roll
         """
-        msg = self._out_msg.sendControlAngleToGimbalMsg(
-            yaw=yaw_angle, pitch=pitch_angle
-        )
+        msg = self._out_msg.sendControlAngleToGimbalMsg(yaw=yaw_angle, pitch=pitch_angle)
         if not self.sendMsg(msg):
             return False
         return True
@@ -763,9 +762,10 @@ class SIYISDK:
 
     def parseZoomMsg(self, msg: str, seq: int):
         try:
-            self._manualZoom_msg.seq = seq
-            self._manualZoom_msg.level = int("0x" + msg[2:4] + msg[0:2], base=16) / 10.0
+            self._manualZoom_msg.seq=seq
+            self._manualZoom_msg.level = int('0x'+msg[2:4]+msg[0:2], base=16) /10.
 
+            
             self._logger.debug("Zoom level %s", self._manualZoom_msg.level)
 
             return True
@@ -862,21 +862,24 @@ class SIYISDK:
             self._logger.error("Error %s", e)
             return False
 
-    def parsePhotoAndRecordMsg(self, msg: str, seq: int):
-        # TODO
-        raise NotImplemented
 
-    def parseRequestPresentWorkingModeMsg(self, msg: str, seq: int):
-        # TODO
+    def parsePhotoAndRecordMsg(self, msg:str, seq: int):
+        # TODO 
         raise NotImplemented
-
-    def parseRequestCurrentZoomValueMsg(self, msg: str, seq: int):
+    
+    def parseRequestPresentWorkingModeMsg(self, msg:str, seq: int):
+        # TODO 
+        raise NotImplemented
+    
+    def parseRequestCurrentZoomValueMsg(self, msg:str, seq: int):
         try:
             self._currentZoomValue_msg.seq = seq
-            self._currentZoomValue_msg.zoom_int = int("0x" + msg[0:2], base=16)
-            self._currentZoomValue_msg.zoom_float = (
-                float(int("0x" + msg[2:4], base=16)) / 10
+            self._currentZoomValue_msg.zoom_int = int(
+                "0x" + msg[0:2], base=16
             )
+            self._currentZoomValue_msg.zoom_float = float(
+                int("0x" + msg[2:4], base=16)
+            )/10
             self._logger.debug(
                 "(zoom_int, zoom_float = ({}, {})".format(
                     self._currentZoomValue_msg.zoom_int,
@@ -888,7 +891,7 @@ class SIYISDK:
             self._logger.error("Error %s", e)
             return False
 
-    def parseSendControlAngleToGimbalMsg(self, msg: str, seq: int):
+    def parseSendControlAngleToGimbalMsg(self, msg:str, seq: int):
         raise NotImplemented
         try:
             self._att_msg.seq = seq
@@ -910,6 +913,8 @@ class SIYISDK:
         except Exception as e:
             self._logger.error("Error %s", e)
             return False
+
+
 
     ##################################################
     #                   Get functions                #
@@ -944,10 +949,7 @@ class SIYISDK:
 
     def getZoomLevel(self):
         # return self._manualZoom_msg.level
-        return (
-            float(self._currentZoomValue_msg.zoom_int)
-            + self._currentZoomValue_msg.zoom_float
-        )
+        return float(self._currentZoomValue_msg.zoom_int) + self._currentZoomValue_msg.zoom_float
 
     #################################################
     #                 Set functions                 #
@@ -970,7 +972,7 @@ class SIYISDK:
         if yaw > 45 or yaw < -45:
             self._logger.error("Desired yaw is outside controllable range -45~45")
             return
-
+        
         if yaw == 0 and pitch == 0:
             self.requestCenterGimbal()
             return
@@ -1005,37 +1007,30 @@ class SIYISDK:
 
             sleep(0.1)  # command frequency
 
-    def setZoomLevel(self, zoom_int, zoom_float, err_thresh=0.1, freq=0.005):
-        if zoom_int < 1 or zoom_int > 30:
+
+    def setZoomLevel(self, zoom_lvl, err_thresh=0.2, freq=0.01):
+        if (zoom_lvl < 1 or zoom_lvl > 30):
             self._logger.error("Desired zoom level is outside optical zoom range.")
             return
-
-        if zoom_int in [1, 30] and zoom_float == 0.0:
-            err_thresh = (
-                0.0  # if zooming to the extremes, don't wait for error threshold
-            )
-
+        
+        # if (zoom_int in [1, 30] and zoom_float == 0.0):
+        #     err_thresh = 0.0 # if zooming to the extremes, don't wait for error threshold
+        
         self.requestZoomHold()  # command the camera to perform some zoom action. Otherwise, getZoomLevel will return -1
-        sleep(1)  # wait for zoom hold to succesfully complete
+        sleep(0.1)  # wait for zoom hold to succesfully complete
 
-        zoom_lvl = float(zoom_int) + float(zoom_float / 10)
-        while True:
-            zoom = self.getZoomLevel()
-
-            if abs(zoom_lvl - zoom) <= err_thresh:
-                self._logger.info(
-                    f"Zoom set succesfully to {zoom_lvl} +/- {err_thresh}"
-                )
+        while(True):
+            zoom = float(self._currentZoomValue_msg.zoom_int) + float(self._currentZoomValue_msg.zoom_float)
+            if (abs(zoom_lvl - zoom) <= err_thresh):
                 self.requestZoomHold()
+                self._logger.info(f"Zoom set succesfully to {zoom_lvl} +/- {err_thresh}")
                 break
-            # else:
-            #     self.requestAbsoluteZoom(zoom_int, zoom_float)
-            if zoom_lvl < zoom:  # Zoom out
+            if (zoom_lvl < zoom): # Zoom out
                 self.requestZoomOut()
-            else:  # Zoom in
+            else: # Zoom in
                 self.requestZoomIn()
 
-            print(f"Current zoom level: {zoom}")
+            # print(f"Current zoom level: {zoom}")
             sleep(freq)
 
 
@@ -1046,7 +1041,7 @@ def test():
         exit(1)
 
     # print("Firmware version: ", cam.getFirmwareVersion())
-
+    
     print("----")
     # print(cam.requestCurrentZoomValue())
     # cam.requestZoomHold()
