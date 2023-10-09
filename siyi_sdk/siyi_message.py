@@ -7,9 +7,9 @@ Copyright 2022
 
 """
 from os import stat
-from crc16_python import crc16_str_swap
+from siyi_sdk.crc16_python import crc16_str_swap
 import logging
-from utils import toHex
+from siyi_sdk.utils import toHex
 
 
 class FirmwareMsg:
@@ -109,6 +109,7 @@ class MaxZoomValueMsg:
     seq = 0
     zoom_max_int = 0
     zoom_max_float = 0.0
+
 
 class SendControlAngleToGimbalMsg:
     seq = 0
@@ -335,15 +336,15 @@ class SIYIMESSAGE:
         seq = self.incrementSEQ(self._seq)
         data_len = self.computeDataLen(data)
         # msg_front = self.HEADER+self._ctr+data_len+seq+cmd_id+data
-        msg_front = self.HEADER+self._ctr+data_len+'0000'+cmd_id+data
+        msg_front = self.HEADER + self._ctr + data_len + "0000" + cmd_id + data
         crc = crc16_str_swap(msg_front)
         if crc is not None:
-            msg = msg_front+crc
+            msg = msg_front + crc
             self._logger.debug("Encoded msg: %s", msg)
             return msg
         else:
             self._logger.error("Could not encode message. crc16 is None")
-            return ''
+            return ""
 
     ########################################################
     #               Message definitions                    #
@@ -367,7 +368,7 @@ class SIYIMESSAGE:
         data = data1 + data2
         cmd_id = COMMAND.ABSOLUTE_ZOOM_AUTO_FOCUS
         return self.encodeMsg(data, cmd_id)
-    
+
     def autoFocusMsg(self):
         """
         Auto focus msg
@@ -375,7 +376,7 @@ class SIYIMESSAGE:
         data = "01"
         cmd_id = COMMAND.AUTO_FOCUS
         return self.encodeMsg(data, cmd_id)
-    
+
     def gimbalAttitudeMsg(self):
         """
         Acquire Gimbal Attiude msg
@@ -383,7 +384,7 @@ class SIYIMESSAGE:
         data = ""
         cmd_id = COMMAND.REQUEST_GIMBAL_ATTITUDE
         return self.encodeMsg(data, cmd_id)
-    
+
     def firmwareVersionMsg(self):
         """
         Returns message string of the Acqsuire Firmware Version msg
@@ -399,7 +400,7 @@ class SIYIMESSAGE:
         data = ""
         cmd_id = COMMAND.REQUEST_GIMBAL_CAMERA_HARDWARE_ID
         return self.encodeMsg(data, cmd_id)
-    
+
     def gimbalCameraWorkingModeMsg(self):
         """
         Returns message string for Request Gimbal Camera's Present Working Mode
@@ -415,7 +416,7 @@ class SIYIMESSAGE:
         data = "01"
         cmd_id = COMMAND.CENTER
         return self.encodeMsg(data, cmd_id)
-    
+
     def closeFocusMsg(self):
         """
         Focus -1 Msg
@@ -466,8 +467,8 @@ class SIYIMESSAGE:
         data2 = toHex(pitch_speed, 8)
         data = data1 + data2
         cmd_id = COMMAND.GIMBAL_ROTATION_SPEED
-        return self.encodeMsg(data, cmd_id) 
-    
+        return self.encodeMsg(data, cmd_id)
+
     def stopFocusMsg(self):
         """
         Focus 0 Msg
@@ -475,7 +476,7 @@ class SIYIMESSAGE:
         data = "00"
         cmd_id = COMMAND.MANUAL_FOCUS
         return self.encodeMsg(data, cmd_id)
-    
+
     def followModeMsg(self):
         """
         Follow mode msg
@@ -483,7 +484,7 @@ class SIYIMESSAGE:
         data = "04"
         cmd_id = COMMAND.PHOTO_AND_RECORD
         return self.encodeMsg(data, cmd_id)
-    
+
     def fpvModeMsg(self):
         """
         FPV mode msg
@@ -507,7 +508,7 @@ class SIYIMESSAGE:
         data = "03"
         cmd_id = COMMAND.PHOTO_AND_RECORD
         return self.encodeMsg(data, cmd_id)
-    
+
     def longFocusMsg(self):
         """
         Focus 1 Msg
@@ -515,7 +516,7 @@ class SIYIMESSAGE:
         data = "01"
         cmd_id = COMMAND.MANUAL_FOCUS
         return self.encodeMsg(data, cmd_id)
-    
+
     def maxZoomValueMsg(self):
         """
         MaxZoomvalue
@@ -565,8 +566,8 @@ class SIYIMESSAGE:
         data = "ff"
         cmd_id = COMMAND.MANUAL_ZOOM_AUTO_FOCUS
 
-        return self.encodeMsg(data, cmd_id)    
-    
+        return self.encodeMsg(data, cmd_id)
+
     def sendControlAngleToGimbalMsg(self, yaw, pitch):
         """
         Control gimbal
