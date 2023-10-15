@@ -970,7 +970,7 @@ class SIYISDK:
             return
 
         if yaw > 270 or yaw < -270:
-            self._logger.error("Desired yaw is outside controllable range -45~45")
+            self._logger.error("Desired yaw is outside controllable range -270~270")
             return
         
         if yaw == 0 and pitch == 0:
