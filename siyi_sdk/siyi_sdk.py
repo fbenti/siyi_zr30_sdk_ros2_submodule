@@ -8,8 +8,8 @@ Copyright 2022
 """
 import logging
 import math
-# from siyi_sdk.siyi_message import *
-from siyi_message import *
+from siyi_sdk.siyi_message import *
+# from siyi_message import *
 from time import sleep, time
 # from siyi_sdk.utils import toInt
 from utils import toInt
@@ -895,22 +895,22 @@ class SIYISDK:
             return False
 
     def parseSendControlAngleToGimbalMsg(self, msg:str, seq: int):
-        raise NotImplemented
+        # raise NotImplemented
         try:
             self._att_msg.seq = seq
             self._att_msg.yaw = toInt(msg[2:4] + msg[0:2]) / 10.0
             self._att_msg.pitch = toInt(msg[6:8] + msg[4:6]) / 10.0
-            self._att_msg.roll = toInt(msg[10:12] + msg[8:10]) / 10.0
+            # self._att_msg.roll = toInt(msg[10:12] + msg[8:10]) / 10.0
             print(
                 self._att_msg.yaw,
                 self._att_msg.pitch,
-                self._att_msg.roll,
+                # self._att_msg.roll,
             )
             self._logger.debug(
                 "(yaw, pitch, roll= (%s, %s, %s)",
                 self._att_msg.yaw,
                 self._att_msg.pitch,
-                self._att_msg.roll,
+                # self._att_msg.roll,
             )
             return True
         except Exception as e:
@@ -1053,7 +1053,8 @@ def test():
     sleep(.03)
     # cam.requestAbsoluteZoom(5,4)
     # sleep(1)
-    print(cam.getZoomLevel())
+    cam.sendControlAngleToGimbal(30,0)
+    # print(cam.getZoomLevel())
     # cam.setGimbalRotation(45, -30, 1.5, 4)
     # cam.requestCenterGimbal()
     # cam.setGimbalRotation(0, 0, 1, 15)
