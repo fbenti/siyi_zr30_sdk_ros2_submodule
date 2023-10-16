@@ -6,11 +6,14 @@ Email: mohamedashraf123@gmail.com
 Copyright 2022
 
 """
-import socket
-from siyi_sdk.siyi_message import *
-from time import sleep, time
 import logging
-from siyi_sdk.utils import toInt
+import math
+# from siyi_sdk.siyi_message import *
+from siyi_message import *
+from time import sleep, time
+# from siyi_sdk.utils import toInt
+from utils import toInt
+import socket
 import threading
 
 
@@ -82,7 +85,7 @@ class SIYISDK:
             target=self.connectionLoop, args=(self._conn_loop_rate,)
         )
 
-        # Gimbal info thread @ 1Hz
+       # Gimbal info thread @ 1Hz
         self._gimbal_info_loop_rate = 1
         self._g_info_thread = threading.Thread(
             target=self.gimbalInfoLoop, args=(self._gimbal_info_loop_rate,)
@@ -94,9 +97,9 @@ class SIYISDK:
             target=self.gimbalAttLoop, args=(self._gimbal_att_loop_rate,)
         )
 
-        self._gimbal_att_loop_rate = 0.01
+        self._gimbal_zoom_loop_rate = 0.1
         self._g_zoom_thread = threading.Thread(
-            target=self.gimbalZoomLoop, args=(self._gimbal_att_loop_rate,)
+            target=self.gimbalZoomLoop, args=(self._gimbal_zoom_loop_rate,)
         )
 
     def resetVars(self):
@@ -948,7 +951,8 @@ class SIYISDK:
         return self._funcFeedback_msg.info_type
 
     def getZoomLevel(self):
-        # return self._manualZoom_msg.level
+        self.requestZoomHold()
+        sleep(.05)
         return float(self._currentZoomValue_msg.zoom_int) + self._currentZoomValue_msg.zoom_float
 
     #################################################
@@ -1012,26 +1016,27 @@ class SIYISDK:
         if (zoom_lvl < 1 or zoom_lvl > 30):
             self._logger.error("Desired zoom level is outside optical zoom range.")
             return
-        
+    
         # if (zoom_int in [1, 30] and zoom_float == 0.0):
         #     err_thresh = 0.0 # if zooming to the extremes, don't wait for error threshold
-        
+        decimal, integer = math.modf(zoom_lvl)
+        decimal = round(decimal,1)
         self.requestZoomHold()  # command the camera to perform some zoom action. Otherwise, getZoomLevel will return -1
         sleep(0.1)  # wait for zoom hold to succesfully complete
+        self.requestAbsoluteZoom(int(integer),int(decimal*10))
+        # while(True):
+        #     zoom = float(self._currentZoomValue_msg.zoom_int) + float(self._currentZoomValue_msg.zoom_float)
+        #     if (abs(zoom_lvl - zoom) <= err_thresh):
+        #         self.requestZoomHold()
+        #         self._logger.info(f"Zoom set succesfully to {zoom_lvl} +/- {err_thresh}")
+        #         break
+        #     if (zoom_lvl < zoom): # Zoom out
+        #         self.requestZoomOut()
+        #     else: # Zoom in
+        #         self.requestZoomIn()
 
-        while(True):
-            zoom = float(self._currentZoomValue_msg.zoom_int) + float(self._currentZoomValue_msg.zoom_float)
-            if (abs(zoom_lvl - zoom) <= err_thresh):
-                self.requestZoomHold()
-                self._logger.info(f"Zoom set succesfully to {zoom_lvl} +/- {err_thresh}")
-                break
-            if (zoom_lvl < zoom): # Zoom out
-                self.requestZoomOut()
-            else: # Zoom in
-                self.requestZoomIn()
-
-            # print(f"Current zoom level: {zoom}")
-            sleep(freq)
+        #     # print(f"Current zoom level: {zoom}")
+        #     sleep(freq)
 
 
 def test():
@@ -1044,13 +1049,13 @@ def test():
     
     print("----")
     # print(cam.requestCurrentZoomValue())
-    # cam.requestZoomHold()
-    # sleep(1)
+    cam.requestZoomHold()
+    sleep(.03)
     # cam.requestAbsoluteZoom(5,4)
     # sleep(1)
-    # print(cam.getZoomLevel())
-    cam.setGimbalRotation(45, -30, 1.5, 4)
-    cam.requestCenterGimbal()
+    print(cam.getZoomLevel())
+    # cam.setGimbalRotation(45, -30, 1.5, 4)
+    # cam.requestCenterGimbal()
     # cam.setGimbalRotation(0, 0, 1, 15)
     print("----")
 
