@@ -19,8 +19,12 @@ def toHex(intval, nbits):
     String of the hexdecimal value
     """
     h = format((intval + (1 << nbits)) % (1 << nbits),'x')
-    if len(h)==1:
+    if len(h)==1 and nbits == 8:
         h="0"+h
+    elif len(h)==1 and nbits == 16:
+        h="000"+h
+    elif len(h)== 2 and nbits == 16:
+        h="00"+h
     return h
 
 def toInt(hexval):

@@ -136,7 +136,7 @@ class COMMAND:
     REQUEST_GIMBAL_CONFIGURATION_INFO = "0a"
     REQUEST_MAX_ZOOM_VALUE_IN_PRESENT = "16"
     REQUEST_ZOOM_VALUE_IN_PRESENT = "18"
-    SEND_CONTROL_ANGLE_TO_GIMBAL = "Oe"
+    SEND_CONTROL_ANGLE_TO_GIMBAL = "0e"
 
 
 #############################################
@@ -335,9 +335,13 @@ class SIYIMESSAGE:
         """
         seq = self.incrementSEQ(self._seq)
         data_len = self.computeDataLen(data)
-        # msg_front = self.HEADER+self._ctr+data_len+seq+cmd_id+data
+        msg_front = self.HEADER+self._ctr+data_len+seq+cmd_id+data
         msg_front = self.HEADER + self._ctr + data_len + "0000" + cmd_id + data
         crc = crc16_str_swap(msg_front)
+        # if cmd_id == COMMAND.SEND_CONTROL_ANGLE_TO_GIMBAL:
+        #     print("data: ", data)
+        #     print("cmd_id: ", cmd_id)
+        #     print("crc: ", crc)
         if crc is not None:
             msg = msg_front + crc
             self._logger.debug("Encoded msg: %s", msg)
@@ -568,12 +572,17 @@ class SIYIMESSAGE:
 
         return self.encodeMsg(data, cmd_id)
 
-    def sendControlAngleToGimbalMsg(self, yaw, pitch):
+    def sendControlAngleToGimbalMsg(self, yaw:int, pitch:int):
         """
         Control gimbal
         """
         data1 = toHex(yaw, 16)
         data2 = toHex(pitch, 16)
+        print(data1)
+        print(data2)
         data = data1 + data2
         cmd_id = COMMAND.SEND_CONTROL_ANGLE_TO_GIMBAL
+        print(self.encodeMsg(data, cmd_id))
+        # return "556601040000000e0000ffa63b11"
         return self.encodeMsg(data, cmd_id)
+

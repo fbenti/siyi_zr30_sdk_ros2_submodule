@@ -8,8 +8,8 @@ Copyright 2022
 """
 import logging
 import math
-from siyi_sdk.siyi_message import *
-# from siyi_message import *
+# from siyi_sdk.siyi_message import *
+from siyi_message import *
 from time import sleep, time
 # from siyi_sdk.utils import toInt
 from utils import toInt
@@ -674,6 +674,14 @@ class SIYISDK:
         --
         [tuple] Current yaw, pitch and roll
         """
+        # if pitch_angle > 25 or pitch_angle < -90:
+        #     self._logger.error("desired pitch is outside controllable range -90~25")
+        #     return False
+
+        # if yaw_angle > 270 or yaw_angle < -270:
+        #     self._logger.error("Desired yaw is outside controllable range -270~270")
+        #     return False
+    
         msg = self._out_msg.sendControlAngleToGimbalMsg(yaw=yaw_angle, pitch=pitch_angle)
         if not self.sendMsg(msg):
             return False
@@ -900,12 +908,12 @@ class SIYISDK:
             self._att_msg.seq = seq
             self._att_msg.yaw = toInt(msg[2:4] + msg[0:2]) / 10.0
             self._att_msg.pitch = toInt(msg[6:8] + msg[4:6]) / 10.0
-            # self._att_msg.roll = toInt(msg[10:12] + msg[8:10]) / 10.0
-            print(
-                self._att_msg.yaw,
-                self._att_msg.pitch,
-                # self._att_msg.roll,
-            )
+            self._att_msg.roll = toInt(msg[10:12] + msg[8:10]) / 10.0
+            # print(
+            #     self._att_msg.yaw,
+            #     self._att_msg.pitch,
+            #     # self._att_msg.roll,
+            # )
             self._logger.debug(
                 "(yaw, pitch, roll= (%s, %s, %s)",
                 self._att_msg.yaw,
@@ -1047,16 +1055,31 @@ def test():
 
     # print("Firmware version: ", cam.getFirmwareVersion())
     
-    print("----")
-    # print(cam.requestCurrentZoomValue())
-    cam.requestZoomHold()
-    sleep(.03)
+    # cam.requestZoomHold()
+    # sleep(.03)
     # cam.requestAbsoluteZoom(5,4)
     # sleep(1)
-    cam.sendControlAngleToGimbal(30,0)
+    # cam.requestCenterGimbal()
+    # sleep(3)
+    # print(cam.getAttitude())
+
+    # print("556601010000000801d112")
+    # print("556601000000000164c4")
+    cam.sendControlAngleToGimbal(-6,0)
+    print("556601040000000e0000ffa63b11")
+    sleep(1)
+    print(cam.getAttitude())
+    # cam.sendControlAngleToGimbal(-10,0)
+    # sleep(3)
+    # print(cam.getAttitude())
+
+    # cam.requestGimbalSpeed(0,0)
+    # sleep(1)
+    # cam.requestAbsoluteZoom(3,4)
+    # sleep(1)
+    # cam.requestGimbalSpeed(0,0)
     # print(cam.getZoomLevel())
     # cam.setGimbalRotation(45, -30, 1.5, 4)
-    # cam.requestCenterGimbal()
     # cam.setGimbalRotation(0, 0, 1, 15)
     print("----")
 
