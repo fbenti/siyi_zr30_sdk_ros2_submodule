@@ -29,5 +29,5 @@ setup(
     packages=find_packages(exclude=["*/test",".github"]),
     platforms=["Linux"],
     python_requires=">=3.9",
-    install_requires=read_requirements("requirements.txt"),
+    # install_requires=read_requirements("requirements.txt"),
 )
