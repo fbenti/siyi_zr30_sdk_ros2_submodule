@@ -8,11 +8,11 @@ Copyright 2022
 """
 import logging
 import math
-# from siyi_sdk.siyi_message import *
-from siyi_message import *
+from siyi_sdk.siyi_message import *
+# from siyi_message import *
 from time import sleep, time
-# from siyi_sdk.utils import toInt
-from utils import toInt
+from siyi_sdk.utils import toInt
+# from utils import toInt
 import socket
 import threading
 
