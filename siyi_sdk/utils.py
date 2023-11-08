@@ -25,6 +25,8 @@ def toHex(intval, nbits):
         h="000"+h
     elif len(h)== 2 and nbits == 16:
         h="00"+h
+    elif len(h)== 3 and nbits == 16:
+        h="0"+h
     return h
 
 def toInt(hexval):

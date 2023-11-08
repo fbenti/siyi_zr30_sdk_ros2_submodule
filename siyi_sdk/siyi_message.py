@@ -8,8 +8,10 @@ Copyright 2022
 """
 from os import stat
 from siyi_sdk.crc16_python import crc16_str_swap
+# from crc16_python import crc16_str_swap
 import logging
 from siyi_sdk.utils import toHex
+# from utils import toHex
 
 
 class FirmwareMsg:
@@ -581,6 +583,7 @@ class SIYIMESSAGE:
         print(data1)
         print(data2)
         data = data1 + data2
+        print(data)
         cmd_id = COMMAND.SEND_CONTROL_ANGLE_TO_GIMBAL
         print(self.encodeMsg(data, cmd_id))
         # return "556601040000000e0000ffa63b11"

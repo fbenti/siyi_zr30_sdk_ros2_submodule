@@ -31,6 +31,7 @@ class SIYISDK:
             d_level = logging.DEBUG
         else:
             d_level = logging.INFO
+            d_level = logging.WARNING
         LOG_FORMAT = (
             " [%(levelname)s] %(asctime)s [SIYISDK::%(funcName)s] :\t%(message)s"
         )
@@ -92,12 +93,12 @@ class SIYISDK:
         )
 
         # Gimbal attitude thread @ 10Hz
-        self._gimbal_att_loop_rate = 0.1
+        self._gimbal_att_loop_rate = 0.25
         self._g_att_thread = threading.Thread(
             target=self.gimbalAttLoop, args=(self._gimbal_att_loop_rate,)
         )
 
-        self._gimbal_zoom_loop_rate = 0.1
+        self._gimbal_zoom_loop_rate = 0.5
         self._g_zoom_thread = threading.Thread(
             target=self.gimbalZoomLoop, args=(self._gimbal_zoom_loop_rate,)
         )
@@ -775,8 +776,7 @@ class SIYISDK:
         try:
             self._manualZoom_msg.seq=seq
             self._manualZoom_msg.level = int('0x'+msg[2:4]+msg[0:2], base=16) /10.
-
-            
+                    
             self._logger.debug("Zoom level %s", self._manualZoom_msg.level)
 
             return True
@@ -891,12 +891,12 @@ class SIYISDK:
             self._currentZoomValue_msg.zoom_float = float(
                 int("0x" + msg[2:4], base=16)
             )/10
-            self._logger.debug(
-                "(zoom_int, zoom_float = ({}, {})".format(
-                    self._currentZoomValue_msg.zoom_int,
-                    self._currentZoomValue_msg.zoom_float,
-                )
-            )
+            # self._logger.error(
+            #     "(zoom_int, zoom_float = ({}, {})".format(
+            #         self._currentZoomValue_msg.zoom_int,
+            #         self._currentZoomValue_msg.zoom_float,
+            #     )
+            # )
             return True
         except Exception as e:
             self._logger.error("Error %s", e)
@@ -924,7 +924,6 @@ class SIYISDK:
         except Exception as e:
             self._logger.error("Error %s", e)
             return False
-
 
 
     ##################################################
@@ -960,7 +959,7 @@ class SIYISDK:
 
     def getZoomLevel(self):
         self.requestZoomHold()
-        sleep(.05)
+        sleep(.2)
         return float(self._currentZoomValue_msg.zoom_int) + self._currentZoomValue_msg.zoom_float
 
     #################################################
@@ -991,7 +990,9 @@ class SIYISDK:
 
         th = err_thresh
         gain = kp
-        while True:
+        ts = time()
+        while True and time() - ts < 1:
+        # while True:
             self.requestGimbalAttitude()
             if self._att_msg.seq == self._last_att_seq:
                 self._logger.info("Did not get new attitude msg")
@@ -1031,6 +1032,7 @@ class SIYISDK:
         decimal = round(decimal,1)
         self.requestZoomHold()  # command the camera to perform some zoom action. Otherwise, getZoomLevel will return -1
         sleep(0.1)  # wait for zoom hold to succesfully complete
+        # self._logger.error(f"HEY {integer, decimal}")
         self.requestAbsoluteZoom(int(integer),int(decimal*10))
         # while(True):
         #     zoom = float(self._currentZoomValue_msg.zoom_int) + float(self._currentZoomValue_msg.zoom_float)
@@ -1065,10 +1067,14 @@ def test():
 
     # print("556601010000000801d112")
     # print("556601000000000164c4")
-    cam.sendControlAngleToGimbal(-6,0)
-    print("556601040000000e0000ffa63b11")
-    sleep(1)
-    print(cam.getAttitude())
+    import numpy as np
+    # cam.sendControlAngleToGimbal(0,0)
+    # sleep(10)
+    # cam.sendControlAngleToGimbal(0,0)
+    cam.sendControlAngleToGimbal(0,-120)
+    # print("556601040000000e0000ffa63b11")
+    sleep(6)
+    # print(cam.getAttitude())
     # cam.sendControlAngleToGimbal(-10,0)
     # sleep(3)
     # print(cam.getAttitude())
