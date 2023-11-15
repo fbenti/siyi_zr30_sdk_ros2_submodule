@@ -103,6 +103,25 @@ class SIYISDK:
             target=self.gimbalZoomLoop, args=(self._gimbal_zoom_loop_rate,)
         )
 
+        self.des_yaw = 0.0
+        self.last_des_yaw = 0.0
+        self.des_pitch = 0.0
+        self.last_des_pitch = 0.0
+        self.yaw_integral_error = 0.0
+        self.pitch_integral_error = 0.0
+        self.yaw_previous_error = 0.0
+        self.pitch_previous_error = 0.0
+        self.yaw_error = 0.0
+        self.pitch_error = 0.0
+        self.yaw_derivative_error = 0.0
+        self.pitch_derivative_error = 0.0
+
+        self._gimbalAttitudeReached = False
+        self._gimbal_control_loop_rate = 0.1
+        self._g_control_thread = threading.Thread(
+            target=self.gimbalControlLoop, args=(self._gimbal_control_loop_rate,)
+        )
+
     def resetVars(self):
         """
         Resets variables to their initial values. For example, to prepare for a fresh connection
@@ -136,12 +155,15 @@ class SIYISDK:
         """
         self._recv_thread.start()
         self._conn_thread.start()
+        self.requestCenterGimbal()
+        sleep(5)
         t0 = time()
         while True:
             if self._connected:
                 self._g_info_thread.start()
-                self._g_att_thread.start()
+                # self._g_att_thread.start()
                 self._g_zoom_thread.start()
+                self._g_control_thread.start()
                 return True
             if (time() - t0) > maxWaitTime and not self._connected:
                 self.disconnect()
@@ -222,7 +244,7 @@ class SIYISDK:
                 break
             self.requestGimbalAttitude()
             sleep(t)
-
+    
     def gimbalZoomLoop(self, t):
         """
         This function is used in a thread to get gimbal attitude periodically
@@ -236,6 +258,21 @@ class SIYISDK:
                 self._logger.warning("Zoom level thread is stopped. Check connection")
                 break
             self.requestCurrentZoomValue()
+            sleep(t)
+
+    def gimbalControlLoop(self, t):
+        """
+        This function is used in a thread to get gimbal attitude periodically
+
+        Params
+        --
+        t [float] message frequency, secnod(s)
+        """
+        while True:
+            if not self._connected:
+                self._logger.warning("Gimbal control thread is stopped. Check connection")
+                break
+            self.gimbalControlAttValue()
             sleep(t)
 
     def sendMsg(self, msg):
@@ -965,6 +1002,70 @@ class SIYISDK:
     #################################################
     #                 Set functions                 #
     #################################################
+
+    def gimbalControlAttValue(self, err_thresh=2.5, kp=0.5):
+        """
+        Control value of gimbal attitude
+        """
+        self.requestGimbalAttitude()
+        if self._att_msg.seq == self._last_att_seq:
+            self._logger.info("Did not get new attitude msg")
+            self.requestGimbalSpeed(0, 0)
+            # continue
+            return
+
+        self._last_att_seq = self._att_msg.seq
+
+        # yaw_err = -yaw + self._att_msg.yaw  # NOTE for some reason it's reversed!!
+        # pitch_err = pitch - self._att_msg.pitch
+
+        yaw_err = -self.des_yaw + self._att_msg.yaw  # NOTE for some reason it's reversed!!
+        pitch_err = self.des_pitch - self._att_msg.pitch
+        # self._logger.error("yaw_err= %s", yaw_err)
+        # self._logger.error("pitch_err= %s", pitch_err)
+
+        if abs(yaw_err) <= err_thresh and abs(pitch_err) <= err_thresh:
+            self._gimbalAttitudeReached = True
+            # self._logger.error("Goal rotation is reached")
+            # return
+        else:
+            self._gimbalAttitudeReached = False
+            # if self._gimbal_adjusting_timer is None:
+            #     self._gimbal_adjusting_timer = time()
+            # if time() - self._gimbal_adjusting_timer > 5:
+            #     self._gimbal_adjusting_timer = None
+            #     self._gimbalAttitudeReached = True
+        kp = 1.2
+        ki = 0.005
+        kd = 0.1
+        if abs(self.des_yaw) - abs(self.last_des_yaw) > 0.5:
+            self.yaw_integral_error = 0.0
+        if abs(self.des_pitch) - abs(self.last_des_pitch) > 0.5:
+            self.pitch_integral_error = 0.0
+        self.last_des_yaw = self.des_yaw
+        self.last_des_pitch = self.des_pitch
+
+        self.yaw_integral_error += yaw_err
+        self.yaw_derivative_error = yaw_err - self.yaw_previous_error
+        yaw_ctrl = kp*yaw_err + ki*self.yaw_integral_error #+ kd*self.yaw_derivative_error
+        self.yaw_previous_error = yaw_err
+        self.pitch_integral_error += pitch_err
+        self.pitch_derivative_error = pitch_err - self.pitch_previous_error
+        pitch_ctrl = kp*pitch_err + ki*self.pitch_integral_error #+ kd*self.pitch_derivative_error
+        self.pitch_previous_error = pitch_err
+
+
+        # y_speed_sp = max(min(100, int(kp * yaw_err)), -100)
+        # p_speed_sp = max(min(100, int(kp * pitch_err)), -100)
+        y_speed_sp = max(min(100, int(yaw_ctrl)), -100)
+        p_speed_sp = max(min(100, int(pitch_ctrl)), -100)
+
+        # self._logger.error("err: %s %s %s ",abs(int(kp*yaw_err)), ki*self.yaw_integral_error, kd*self.yaw_derivative_error)
+        self._logger.debug("yaw speed setpoint= %s", y_speed_sp)
+        self._logger.debug("pitch speed setpoint= %s", p_speed_sp)
+        self.requestGimbalSpeed(y_speed_sp, p_speed_sp)
+    
+
     def setGimbalRotation(self, yaw, pitch, err_thresh=1.0, kp=4):
         """
         Sets gimbal attitude angles yaw and pitch in degrees
@@ -984,9 +1085,14 @@ class SIYISDK:
             self._logger.error("Desired yaw is outside controllable range -270~270")
             return
         
+        self.des_yaw = yaw
+        self.des_pitch = pitch
+
         if yaw == 0 and pitch == 0:
             self.requestCenterGimbal()
             return
+        
+        return
 
         th = err_thresh
         gain = kp
@@ -1067,14 +1173,9 @@ def test():
 
     # print("556601010000000801d112")
     # print("556601000000000164c4")
-    import numpy as np
-    # cam.sendControlAngleToGimbal(0,0)
-    # sleep(10)
-    # cam.sendControlAngleToGimbal(0,0)
-    cam.sendControlAngleToGimbal(0,-120)
-    # print("556601040000000e0000ffa63b11")
-    sleep(6)
-    # print(cam.getAttitude())
+    cam.sendControlAngleToGimbal(-6,0)
+    sleep(1)
+    print(cam.getAttitude())
     # cam.sendControlAngleToGimbal(-10,0)
     # sleep(3)
     # print(cam.getAttitude())
