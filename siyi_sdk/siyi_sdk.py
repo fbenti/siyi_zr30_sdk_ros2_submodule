@@ -188,8 +188,6 @@ class SIYISDK:
         ):
             self._connected = True
             self._last_fw_seq = self._fw_msg.seq
-        else:
-            self._connected = False
 
     def connectionLoop(self, t):
         """
@@ -238,9 +236,7 @@ class SIYISDK:
         """
         while True:
             if not self._connected:
-                self._logger.warning(
-                    "Gimbal attitude thread is stopped. Check connection"
-                )
+                self._logger.warning("Gimbal attitude thread is stopped. Check connection")
                 break
             self.requestGimbalAttitude()
             sleep(t)
@@ -261,7 +257,7 @@ class SIYISDK:
             sleep(t)
 
     def gimbalControlLoop(self, t):
-        """
+        """ 
         This function is used in a thread to get gimbal attitude periodically
 
         Params
